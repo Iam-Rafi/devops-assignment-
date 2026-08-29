@@ -17,9 +17,6 @@ env:
   AWS_REGION: ap-southeast-1
   ECR_REGISTRY: 753633635981.dkr.ecr.ap-southeast-1.amazonaws.com
   ECR_REPOSITORY: devops-assignment
-  EC2_INSTANCE_ID: i-02827a140b2939fa8
-  EC2_PRIVATE_IP: 10.0.11.53
-  EC2_AZ: ap-southeast-1a
 
 jobs:
 
@@ -180,6 +177,34 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::753633635981:role/staging-devops-assignment-github-actions-role
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Discover staging EC2
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --region "$AWS_REGION" \
+            --filters \
+              "Name=tag:Name,Values=staging-devops-assignment-app" \
+              "Name=instance-state-name,Values=running" \
+            --query 'Reservations[0].Instances[0].InstanceId' \
+            --output text)
+
+          PRIVATE_IP=$(aws ec2 describe-instances \
+            --region "$AWS_REGION" \
+            --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].PrivateIpAddress' \
+            --output text)
+
+          AZ=$(aws ec2 describe-instances \
+            --region "$AWS_REGION" \
+            --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' \
+            --output text)
+
+          echo "EC2_INSTANCE_ID=$INSTANCE_ID" >> "$GITHUB_ENV"
+          echo "EC2_PRIVATE_IP=$PRIVATE_IP" >> "$GITHUB_ENV"
+          echo "EC2_AZ=$AZ" >> "$GITHUB_ENV"
+
+          echo "Deploying to $INSTANCE_ID ($PRIVATE_IP, $AZ)"
 
       - name: Generate temporary SSH key
         run: |
