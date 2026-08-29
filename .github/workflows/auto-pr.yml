@@ -39,7 +39,5 @@ jobs:
               --base main \
               --head "$GITHUB_REF_NAME" \
               --title "Code review: $GITHUB_REF_NAME" \
-              --body "Automated pull request for code changes.
-
-Please review the changes and merge after CI passes."
+              --body "Automated pull request for code changes. Please review the changes and merge after CI passes."
           fi
