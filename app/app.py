@@ -78,3 +78,4 @@ st.dataframe(display, use_container_width=True, hide_index=True)
 
 csv = filtered.to_csv(index=False).encode("utf-8")
 st.download_button("⬇️ Download filtered sales CSV", csv, "bike_sales.csv", "text/csv")
+
