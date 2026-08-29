@@ -11,14 +11,15 @@ on:
 
   push:
     branches:
-      - main
+      - '**'
     paths:
       - 'app/**'
       - 'docker/**'
       - '.github/workflows/**'
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
   id-token: write
 
 env:
@@ -104,6 +105,28 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: 1
+
+
+  create-pull-request:
+    name: Create Pull Request
+    runs-on: ubuntu-latest
+
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+
+    steps:
+      - name: Create pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          EXISTING_PR=$(gh pr list             --repo "$GITHUB_REPOSITORY"             --head "$GITHUB_REF_NAME"             --base main             --state open             --json number             --jq '.[0].number')
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "Pull request #$EXISTING_PR already exists."
+          else
+            gh pr create               --repo "$GITHUB_REPOSITORY"               --base main               --head "$GITHUB_REF_NAME"               --title "Code review: $GITHUB_REF_NAME"               --body "Automated pull request for code changes on branch \`$GITHUB_REF_NAME\`.
+
+CI tests and security scans are required before merging."
+          fi
 
 
   build-and-push:
